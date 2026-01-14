@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import javax.imageio.ImageIO;
 
 public class Player {
@@ -16,7 +17,7 @@ public class Player {
 
         try {
             sprite = ImageIO.read(
-                    getClass().getResource("/resources/player.png")
+                    Objects.requireNonNull(getClass().getResource("/resources/player.png"))
             );
         } catch (Exception e) {
             e.printStackTrace();

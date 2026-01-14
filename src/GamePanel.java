@@ -4,17 +4,16 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel implements Runnable, KeyListener {
 
-    // ===== ИГРОВОЙ ПОТОК =====
-    private Thread gameThread;
     private boolean running = false;
 
     // ===== ИГРОВЫЕ ОБЪЕКТЫ =====
-    private Player player;
-    private Enemy enemy;
+    private final Player player;
+    private final Enemy enemy;
 
     // ===== ФОН =====
     private BufferedImage background;
@@ -36,7 +35,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         // Загружаем фон
         try {
             background = ImageIO.read(
-                    getClass().getResource("/resources/background.png")
+                    Objects.requireNonNull(getClass().getResource("/resources/background.png"))
             );
         } catch (Exception e) {
             e.printStackTrace();
@@ -46,7 +45,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     // ===== ЗАПУСК ИГРЫ =====
     public void startGame() {
         running = true;
-        gameThread = new Thread(this);
+        // ===== ИГРОВОЙ ПОТОК =====
+        Thread gameThread = new Thread(this);
         gameThread.start();
     }
 
