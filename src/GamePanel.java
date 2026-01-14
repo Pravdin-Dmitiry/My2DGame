@@ -1,37 +1,62 @@
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.util.Objects;
+import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel implements Runnable, KeyListener {
 
-    private Thread gameThread;
     private boolean running = false;
 
-    int playerX = 100;
-    int playerY = 100;
-    int speed = 4;
+    // ===== ИГРОВЫЕ ОБЪЕКТЫ =====
+    private final Player player;
+    private final Enemy enemy;
 
-    boolean up, down, left, right;
+    // ===== ФОН =====
+    private BufferedImage background;
 
+    // ===== УПРАВЛЕНИЕ =====
+    private boolean up, down, left, right;
+
+    // ===== КОНСТРУКТОР =====
     public GamePanel() {
         this.setPreferredSize(new Dimension(800, 600));
-        this.setBackground(Color.BLACK);
         this.setFocusable(true);
+        this.setBackground(Color.BLACK);
         this.addKeyListener(this);
+
+        // Создаём игрока и врага
+        player = new Player(100, 100);
+        enemy = new Enemy(500, 300);
+
+        // Загружаем фон
+        try {
+            background = ImageIO.read(
+                    Objects.requireNonNull(getClass().getResource("/resources/background.png"))
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
+    // ===== ЗАПУСК ИГРЫ =====
     public void startGame() {
         running = true;
-        gameThread = new Thread(this);
+        // ===== ИГРОВОЙ ПОТОК =====
+        Thread gameThread = new Thread(this);
         gameThread.start();
     }
 
+    // ===== ИГРОВОЙ ЦИКЛ =====
     @Override
     public void run() {
         while (running) {
             update();
             repaint();
+
             try {
                 Thread.sleep(16); // ~60 FPS
             } catch (InterruptedException e) {
@@ -40,27 +65,34 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         }
     }
 
+    // ===== ОБНОВЛЕНИЕ ЛОГИКИ =====
     private void update() {
-        if (up) playerY -= speed;
-        if (down) playerY += speed;
-        if (left) playerX -= speed;
-        if (right) playerX += speed;
+        player.update(up, down, left, right, getWidth(), getHeight());
+        enemy.update(player);
 
-        // Ограничение движения по границам окна
-        if (playerX < 0) playerX = 0;
-        if (playerX > getWidth() - 40) playerX = getWidth() - 40;
-        if (playerY < 0) playerY = 0;
-        if (playerY > getHeight() - 40) playerY = getHeight() - 40;
+        // Проверка столкновения
+        if (player.getBounds().intersects(enemy.getBounds())) {
+            running = false;
+            JOptionPane.showMessageDialog(this, "Game Over!");
+        }
     }
 
+    // ===== ОТРИСОВКА =====
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        g.setColor(Color.RED);
-        g.fillRect(playerX, playerY, 40, 40); // квадрат игрока
+        // ФОН
+        if (background != null) {
+            g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+        }
+
+        // ИГРОВЫЕ ОБЪЕКТЫ
+        player.draw(g);
+        enemy.draw(g);
     }
 
+    // ===== КЛАВИАТУРА =====
     @Override
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
@@ -82,5 +114,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+        // не используется
+    }
 }
